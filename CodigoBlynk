@@ -1,0 +1,60 @@
+#define BLYNK_TEMPLATE_ID "TMPL2YkE53mCM"
+#define BLYNK_TEMPLATE_NAME "NodeMCU"
+#define BLYNK_AUTH_TOKEN "i9to4KGC_KwjkV5NJEhFnyb35taMxTZ-"
+
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <Servo.h>
+
+Servo servo1;
+int ledrojo = D1;
+int ledverde = D0;
+
+// Autenticacion de blynk y datos del wifi.
+char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[] = ""; //SSID de tu red
+char pass[] = ""; //Clave de la red
+
+bool movimientoCompleto = false; // Variable para control del movimiento
+
+BLYNK_WRITE(V0) // Control del servo con blynk
+{
+  if (!movimientoCompleto) {
+    int s0 = param.asInt();
+    digitalWrite(ledverde, HIGH);
+    Serial.println("Dispensando");
+    servo1.write(150); // Mover el servo a un punto
+    delay(300); // Espera
+    digitalWrite(ledverde, LOW);
+    servo1.write(0); // Mover el servo a su estado original
+    movimientoCompleto = true; // Marca el movimiento como completo
+    Blynk.virtualWrite(V2, s0); // Actualiza el valor en Blynk
+    digitalWrite(ledrojo, HIGH);
+    delay(2000);
+    Serial.println("Completado");
+    digitalWrite(ledrojo, LOW);
+  }
+}
+
+void setup()
+{
+  Serial.begin(9600);
+  servo1.attach(D2); // Conecta el servo1 al pin D2 de NodeMCU
+  pinMode(ledverde, OUTPUT);
+  pinMode(ledrojo, OUTPUT);
+  Blynk.begin(auth, ssid, pass);
+  delay(2000); // Pantalla de presentación
+}
+
+void loop()
+{
+  if (movimientoCompleto) {
+    delay(1000);
+    digitalWrite(ledrojo, LOW);
+    delay(2000);
+    Serial.println("Comida dispensada");
+    movimientoCompleto = false; // Restablece el estado del movimiento
+  }
+  Blynk.run();
+}
